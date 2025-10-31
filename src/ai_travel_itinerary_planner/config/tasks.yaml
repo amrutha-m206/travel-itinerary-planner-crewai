@@ -1,0 +1,55 @@
+---
+research_destination_information:
+  description: Conduct comprehensive research on {destination} including top attractions,
+    cultural sites, weather patterns, best time to visit, local customs, and must-see
+    landmarks. Focus on experiences that fit within {budget_range} budget and are
+    suitable for a {trip_duration} day trip. Include information about entry fees,
+    opening hours, and any special requirements.
+  expected_output: 'A detailed research report containing: destination overview, top
+    15-20 attractions with descriptions and costs, cultural highlights, weather information,
+    best times to visit, local customs and etiquette, safety considerations, and budget-friendly
+    recommendations.'
+  agent: travel_destination_research_specialist
+find_accommodations_and_transportation:
+  description: Research and identify the best accommodation options in {destination}
+    within {budget_range} budget that align with {traveler_preferences} preferences.
+    Also research transportation options including flights, local public transport,
+    car rentals, and ride-sharing services. Consider proximity to major attractions
+    and transportation hubs for {trip_duration} days.
+  expected_output: 'A comprehensive accommodation and transportation guide including:
+    5-8 recommended hotels/accommodations with prices, locations, and amenities; transportation
+    options with costs and schedules; local transport passes and recommendations;
+    airport/arrival information and ground transportation options.'
+  agent: accommodation_and_transportation_coordinator
+  context:
+  - research_destination_information
+curate_local_experiences_and_dining:
+  description: Research and curate authentic local experiences, dining options, cultural
+    activities, and entertainment in {destination} that match {traveler_preferences}
+    interests and {budget_range} budget. Include unique experiences like local tours,
+    cooking classes, cultural performances, food markets, and hidden gems that locals
+    recommend.
+  expected_output: 'A curated experiences guide containing: 10-15 unique local experiences
+    with descriptions, costs, and booking information; restaurant recommendations
+    across different price ranges; cultural activities and entertainment options;
+    local markets and shopping areas; nightlife recommendations if applicable.'
+  agent: local_experience_and_activity_curator
+  context:
+  - research_destination_information
+create_complete_travel_itinerary:
+  description: Synthesize all research into a comprehensive, day-by-day travel itinerary
+    for {destination} spanning {trip_duration} days. Organize activities geographically
+    and chronologically to minimize travel time, include meal recommendations, accommodation
+    details, transportation instructions, and backup options. Ensure the itinerary
+    stays within {budget_range} budget and matches {traveler_preferences} preferences.
+  expected_output: 'A complete travel itinerary in markdown format including: detailed
+    day-by-day schedule with times, activities, and locations; accommodation booking
+    details and check-in/out information; comprehensive transportation plan; restaurant
+    reservations and dining schedule; total budget breakdown; emergency contacts and
+    important information; packing list and travel tips; downloadable maps and offline
+    resources.'
+  agent: master_itinerary_planner
+  context:
+  - research_destination_information
+  - find_accommodations_and_transportation
+  - curate_local_experiences_and_dining
