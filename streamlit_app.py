@@ -178,9 +178,10 @@ if "markdown_output" in st.session_state:
         # Generate PDF bytes
         pdf_bytes = bytes(pdf.output(dest="S").encode("latin-1"))
 
-        st.download_button(
-            label="📄 Download as PDF",
-            data=pdf_bytes,
-            file_name=f"itinerary_{destination.replace(' ', '_')}.pdf",
-            mime="application/pdf",
-        )
+        # st.download_button(
+        #     label="📄 Download as PDF",
+        #     data=pdf_bytes,
+        #     file_name=f"itinerary_{destination.replace(' ', '_')}.pdf",
+        #     mime="application/pdf",
+        # )
+
