@@ -152,24 +152,8 @@ if "markdown_output" in st.session_state:
     st.markdown(markdown_output)
 
     if st.button("📝 Convert to Plain Text"):
-        # --- Improved Markdown → Text Converter ---
-        def markdown_to_text(md_content):
-            html = markdown.markdown(md_content)
-            soup = BeautifulSoup(html, "html.parser")
-            text = ""
-
-            for elem in soup.recursiveChildGenerator():
-                if elem.name == "li":
-                    text += f"• {elem.get_text()}\n"
-                elif elem.name in ["h1", "h2", "h3"]:
-                    text += f"\n**{elem.get_text().upper()}**\n"
-                elif elem.name == "p":
-                    text += f"{elem.get_text()}\n"
-                elif elem.name == "br":
-                    text += "\n"
-            return text.strip()
-
-        plain_text = markdown_to_text(markdown_output)
+        html = markdown.markdown(markdown_output)
+        plain_text = BeautifulSoup(html, "html.parser").get_text()
         st.text_area("Converted Plain Text", plain_text, height=400)
 
         # ------------- PDF Creation -------------
@@ -191,8 +175,8 @@ if "markdown_output" in st.session_state:
         for line in textwrap.wrap(plain_text, width=100):
             pdf.multi_cell(0, 8, line)
 
-        # # Generate PDF bytes
-        # pdf_bytes = bytes(pdf.output(dest="S").encode("latin-1"))
+        # Generate PDF bytes
+        pdf_bytes = bytes(pdf.output(dest="S").encode("latin-1"))
 
         # st.download_button(
         #     label="📄 Download as PDF",
@@ -200,4 +184,3 @@ if "markdown_output" in st.session_state:
         #     file_name=f"itinerary_{destination.replace(' ', '_')}.pdf",
         #     mime="application/pdf",
         # )
-
