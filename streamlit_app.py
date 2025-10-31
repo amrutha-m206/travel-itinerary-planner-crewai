@@ -127,7 +127,6 @@ if submit_btn:
             summary = parsed.get("summary", "No summary available.")
         except Exception:
             itinerary, total_cost, summary = [], "N/A", "No structured itinerary available."
-            st.markdown(raw_output, unsafe_allow_html=True)
             markdown_output = raw_output
         else:
             # Construct markdown view from JSON if structured
@@ -139,42 +138,49 @@ if submit_btn:
                 markdown_output += f"**Estimated Cost:** {day.get('estimated_cost','N/A')}\n\n---\n"
             markdown_output += f"\n### Summary\n{summary}\n\n**Total Estimated Cost:** {total_cost}"
 
-        # ---------------- Markdown to Text Conversion ----------------
-        st.markdown(markdown_output)
-
-        if st.button("📝 Convert to Plain Text"):
-            html = markdown.markdown(markdown_output)
-            plain_text = BeautifulSoup(html, "html.parser").get_text()
-            st.text_area("Converted Plain Text", plain_text, height=400)
-
-            # ------------- PDF Creation -------------
-            pdf = FPDF()
-            pdf.add_page()
-            pdf.set_auto_page_break(auto=True, margin=15)
-            pdf.set_font("Arial", "", 12)
-
-            # Add header info
-            pdf.set_font("Arial", "B", 14)
-            pdf.cell(0, 10, f"Travel Itinerary for {destination}", ln=True, align="C")
-            pdf.set_font("Arial", "", 12)
-            pdf.multi_cell(0, 8, f"Dates: {start_date} to {end_date}")
-            pdf.multi_cell(0, 8, f"Travelers: {travelers}")
-            pdf.multi_cell(0, 8, f"Budget: {budget_band.capitalize()}")
-            pdf.ln(5)
-
-            # Add plain text itinerary
-            for line in textwrap.wrap(plain_text, width=100):
-                pdf.multi_cell(0, 8, line)
-
-            # Generate PDF bytes
-            pdf_bytes = bytes(pdf.output(dest="S").encode("latin-1"))
-
-            st.download_button(
-                label="📄 Download as PDF",
-                data=pdf_bytes,
-                file_name=f"itinerary_{destination.replace(' ', '_')}.pdf",
-                mime="application/pdf",
-            )
+        # Save itinerary to session so it persists
+        st.session_state["markdown_output"] = markdown_output
 
     except Exception as e:
         st.error(f"❌ Error running CrewAI automation: {e}")
+
+# ----------------------------------------------------------------
+#  Display Section (Independent of Form Submit)
+# ----------------------------------------------------------------
+if "markdown_output" in st.session_state:
+    markdown_output = st.session_state["markdown_output"]
+    st.markdown(markdown_output)
+
+    if st.button("📝 Convert to Plain Text"):
+        html = markdown.markdown(markdown_output)
+        plain_text = BeautifulSoup(html, "html.parser").get_text()
+        st.text_area("Converted Plain Text", plain_text, height=400)
+
+        # ------------- PDF Creation -------------
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_auto_page_break(auto=True, margin=15)
+        pdf.set_font("Arial", "", 12)
+
+        # Add header info
+        pdf.set_font("Arial", "B", 14)
+        pdf.cell(0, 10, f"Travel Itinerary for {destination}", ln=True, align="C")
+        pdf.set_font("Arial", "", 12)
+        pdf.multi_cell(0, 8, f"Dates: {start_date} to {end_date}")
+        pdf.multi_cell(0, 8, f"Travelers: {travelers}")
+        pdf.multi_cell(0, 8, f"Budget: {budget_band.capitalize()}")
+        pdf.ln(5)
+
+        # Add plain text itinerary
+        for line in textwrap.wrap(plain_text, width=100):
+            pdf.multi_cell(0, 8, line)
+
+        # Generate PDF bytes
+        pdf_bytes = bytes(pdf.output(dest="S").encode("latin-1"))
+
+        st.download_button(
+            label="📄 Download as PDF",
+            data=pdf_bytes,
+            file_name=f"itinerary_{destination.replace(' ', '_')}.pdf",
+            mime="application/pdf",
+        )
