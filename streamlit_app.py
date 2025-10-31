@@ -8,6 +8,8 @@ import markdown
 from bs4 import BeautifulSoup
 import textwrap
 import json
+from io import BytesIO
+import requests
 
 # ----------------------------------------------------------------
 #  Path Setup and Imports
@@ -152,7 +154,6 @@ if "markdown_output" in st.session_state:
 
     # ---- Direct PDF Download Button ----
     if st.button("📄 Download Itinerary as PDF"):
-        # Convert markdown → formatted text for PDF
         html = markdown.markdown(markdown_output)
         soup = BeautifulSoup(html, "html.parser")
 
@@ -160,28 +161,48 @@ if "markdown_output" in st.session_state:
         pdf.add_page()
         pdf.set_auto_page_break(auto=True, margin=15)
 
+        # ✅ Ensure Unicode font available
+        font_path = os.path.join(os.path.dirname(__file__), "DejaVuSans.ttf")
+        if not os.path.exists(font_path):
+            st.warning("⚠️ Missing 'DejaVuSans.ttf'. Downloading font for Unicode PDF support...")
+            try:
+                url = "https://github.com/dejavu-fonts/dejavu-fonts/raw/master/ttf/DejaVuSans.ttf"
+                r = requests.get(url)
+                with open(font_path, "wb") as f:
+                    f.write(r.content)
+                st.success("✅ Font downloaded successfully.")
+            except Exception as e:
+                st.error(f"❌ Failed to download font: {e}")
+                st.stop()
+
+        pdf.add_font("DejaVu", "", font_path, uni=True)
+        pdf.set_font("DejaVu", size=12)
+
         def write_pdf_text(tag):
             if tag.name in ["h1", "h2", "h3"]:
-                pdf.set_font("Arial", "B", 14)
+                pdf.set_font("DejaVu", style="B", size=14)
                 pdf.multi_cell(0, 10, tag.get_text().upper())
                 pdf.ln(2)
             elif tag.name == "p":
-                pdf.set_font("Arial", "", 12)
+                pdf.set_font("DejaVu", size=12)
                 pdf.multi_cell(0, 8, tag.get_text())
                 pdf.ln(2)
             elif tag.name == "ul":
-                pdf.set_font("Arial", "", 12)
+                pdf.set_font("DejaVu", size=12)
                 for li in tag.find_all("li"):
                     pdf.multi_cell(0, 8, f"• {li.get_text()}")
                 pdf.ln(2)
-            elif tag.name == "strong" or tag.name == "b":
-                pdf.set_font("Arial", "B", 12)
+            elif tag.name in ["strong", "b"]:
+                pdf.set_font("DejaVu", style="B", size=12)
                 pdf.multi_cell(0, 8, tag.get_text())
 
         for elem in soup.find_all(["h1", "h2", "h3", "p", "ul", "strong", "b"]):
             write_pdf_text(elem)
 
-        pdf_bytes = bytes(pdf.output(dest="S").encode("latin-1"))
+        # ✅ Use BytesIO to get PDF bytes safely (no encoding)
+        pdf_buffer = BytesIO()
+        pdf.output(pdf_buffer)
+        pdf_bytes = pdf_buffer.getvalue()
 
         st.download_button(
             label="⬇️ Save PDF",
