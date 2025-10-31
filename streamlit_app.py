@@ -4,9 +4,9 @@ import streamlit as st
 from dotenv import load_dotenv
 from datetime import date
 from fpdf import FPDF
-import textwrap
 import markdown
 from bs4 import BeautifulSoup
+import textwrap
 import json
 
 # ----------------------------------------------------------------
@@ -138,7 +138,6 @@ if submit_btn:
                 markdown_output += f"**Estimated Cost:** {day.get('estimated_cost','N/A')}\n\n---\n"
             markdown_output += f"\n### Summary\n{summary}\n\n**Total Estimated Cost:** {total_cost}"
 
-        # Save itinerary to session so it persists
         st.session_state["markdown_output"] = markdown_output
 
     except Exception as e:
@@ -151,36 +150,42 @@ if "markdown_output" in st.session_state:
     markdown_output = st.session_state["markdown_output"]
     st.markdown(markdown_output)
 
-    if st.button("📝 Convert to Plain Text"):
+    # ---- Direct PDF Download Button ----
+    if st.button("📄 Download Itinerary as PDF"):
+        # Convert markdown → formatted text for PDF
         html = markdown.markdown(markdown_output)
-        plain_text = BeautifulSoup(html, "html.parser").get_text()
-        st.text_area("Converted Plain Text", plain_text, height=400)
+        soup = BeautifulSoup(html, "html.parser")
 
-        # ------------- PDF Creation -------------
         pdf = FPDF()
         pdf.add_page()
         pdf.set_auto_page_break(auto=True, margin=15)
-        pdf.set_font("Arial", "", 12)
 
-        # Add header info
-        pdf.set_font("Arial", "B", 14)
-        pdf.cell(0, 10, f"Travel Itinerary for {destination}", ln=True, align="C")
-        pdf.set_font("Arial", "", 12)
-        pdf.multi_cell(0, 8, f"Dates: {start_date} to {end_date}")
-        pdf.multi_cell(0, 8, f"Travelers: {travelers}")
-        pdf.multi_cell(0, 8, f"Budget: {budget_band.capitalize()}")
-        pdf.ln(5)
+        def write_pdf_text(tag):
+            if tag.name in ["h1", "h2", "h3"]:
+                pdf.set_font("Arial", "B", 14)
+                pdf.multi_cell(0, 10, tag.get_text().upper())
+                pdf.ln(2)
+            elif tag.name == "p":
+                pdf.set_font("Arial", "", 12)
+                pdf.multi_cell(0, 8, tag.get_text())
+                pdf.ln(2)
+            elif tag.name == "ul":
+                pdf.set_font("Arial", "", 12)
+                for li in tag.find_all("li"):
+                    pdf.multi_cell(0, 8, f"• {li.get_text()}")
+                pdf.ln(2)
+            elif tag.name == "strong" or tag.name == "b":
+                pdf.set_font("Arial", "B", 12)
+                pdf.multi_cell(0, 8, tag.get_text())
 
-        # Add plain text itinerary
-        for line in textwrap.wrap(plain_text, width=100):
-            pdf.multi_cell(0, 8, line)
+        for elem in soup.find_all(["h1", "h2", "h3", "p", "ul", "strong", "b"]):
+            write_pdf_text(elem)
 
-        # Generate PDF bytes
         pdf_bytes = bytes(pdf.output(dest="S").encode("latin-1"))
 
-        # st.download_button(
-        #     label="📄 Download as PDF",
-        #     data=pdf_bytes,
-        #     file_name=f"itinerary_{destination.replace(' ', '_')}.pdf",
-        #     mime="application/pdf",
-        # )
+        st.download_button(
+            label="⬇️ Save PDF",
+            data=pdf_bytes,
+            file_name=f"itinerary_{destination.replace(' ', '_')}.pdf",
+            mime="application/pdf",
+        )
