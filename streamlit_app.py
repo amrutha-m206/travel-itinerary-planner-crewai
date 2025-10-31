@@ -151,7 +151,7 @@ if "markdown_output" in st.session_state:
     markdown_output = st.session_state["markdown_output"]
     st.markdown(markdown_output)
 
-       if st.button("📝 Convert to Plain Text"):
+    if st.button("📝 Convert to Plain Text"):
         # --- Improved Markdown → Text Converter ---
         def markdown_to_text(md_content):
             html = markdown.markdown(md_content)
@@ -200,4 +200,3 @@ if "markdown_output" in st.session_state:
             file_name=f"itinerary_{destination.replace(' ', '_')}.pdf",
             mime="application/pdf",
         )
-
