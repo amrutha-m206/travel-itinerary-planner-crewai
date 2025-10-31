@@ -6,7 +6,6 @@ from datetime import date
 from fpdf import FPDF
 import markdown
 from bs4 import BeautifulSoup
-import urllib.request
 import json
 
 # ----------------------------------------------------------------
@@ -151,72 +150,25 @@ if "markdown_output" in st.session_state:
     st.markdown(markdown_output)
 
     # ----------------------------------------------------------------
-    #  Unicode-safe PDF Generation with Verified Font
+    #  SIMPLE PDF GENERATION (SAFE & STREAMLIT-CLOUD FRIENDLY)
     # ----------------------------------------------------------------
     if st.button("📄 Download Itinerary as PDF"):
-        html = markdown.markdown(markdown_output)
-        soup = BeautifulSoup(html, "html.parser")
-
-        # Ensure fonts directory
-        font_dir = "fonts"
-        os.makedirs(font_dir, exist_ok=True)
-        font_path = os.path.join(font_dir, "DejaVuSans.ttf")
-
-        def ensure_font():
-            """Download and validate the DejaVuSans.ttf font for Unicode support."""
-            if not os.path.exists(font_path):
-                st.warning("⚠️ Missing 'DejaVuSans.ttf'. Downloading font for Unicode PDF support...")
-                try:
-                    url = "https://github.com/dejavu-fonts/dejavu-fonts/raw/version_2_37/ttf/DejaVuSans.ttf"
-                    urllib.request.urlretrieve(url, font_path)
-                    if not os.path.getsize(font_path) > 100000:
-                        raise ValueError("Downloaded file too small to be a valid TTF.")
-                    st.success("✅ Font downloaded successfully.")
-                except Exception as e:
-                    st.error(f"❌ Font download failed: {e}")
-                    return None
-            return font_path
-
-        font_file = ensure_font()
-
-        class PDF(FPDF):
-            def __init__(self):
-                super().__init__()
-                self.set_auto_page_break(auto=True, margin=15)
-
-        pdf = PDF()
+        pdf = FPDF()
         pdf.add_page()
+        pdf.set_auto_page_break(auto=True, margin=15)
+        pdf.set_font("Arial", size=12)
 
-        if font_file:
-            try:
-                pdf.add_font("DejaVu", "", font_file, uni=True)
-                pdf.set_font("DejaVu", "", 12)
-            except Exception as e:
-                st.error(f"⚠️ Failed to load DejaVu font: {e}. Falling back to Helvetica.")
-                pdf.set_font("Helvetica", "", 12)
-        else:
-            pdf.set_font("Helvetica", "", 12)
+        # Convert markdown text to plain printable text
+        clean_text = markdown_output.replace("**", "").replace("#", "")
+        lines = clean_text.split("\n")
 
-        # Write PDF content
-        for elem in soup.find_all(["h1", "h2", "h3", "p", "ul", "strong", "b"]):
-            if elem.name in ["h1", "h2", "h3"]:
-                pdf.set_font("DejaVu", "B", 14)
-                pdf.multi_cell(0, 10, elem.get_text().upper())
-                pdf.ln(2)
-            elif elem.name == "p":
-                pdf.set_font("DejaVu", "", 12)
-                pdf.multi_cell(0, 8, elem.get_text())
-                pdf.ln(2)
-            elif elem.name == "ul":
-                pdf.set_font("DejaVu", "", 12)
-                for li in elem.find_all("li"):
-                    pdf.multi_cell(0, 8, f"• {li.get_text()}")
-                pdf.ln(2)
-            elif elem.name in ["strong", "b"]:
-                pdf.set_font("DejaVu", "B", 12)
-                pdf.multi_cell(0, 8, elem.get_text())
+        for line in lines:
+            if line.strip() == "":
+                pdf.ln(5)
+            else:
+                pdf.multi_cell(0, 8, line)
 
-        # Output PDF bytes safely (Unicode friendly)
+        # Encode safely for Streamlit download
         pdf_bytes = pdf.output(dest="S").encode("latin-1", "ignore")
 
         st.download_button(
