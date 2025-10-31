@@ -31,7 +31,7 @@ with st.form("travel_form"):
     start_date = st.date_input("🗓️ Start Date")
     end_date = st.date_input("🏁 End Date")
     travelers = st.number_input("👥 Number of Travelers", min_value=1, value=2)
-    travel_style = st.selectbox("🎯 Travel Style", ["relaxation", "adventure", "culture"])
+   # travel_style = st.selectbox("🎯 Travel Style", ["relaxation", "adventure", "culture"])
     budget_band = st.selectbox("💰 Budget Level", ["low", "medium", "high"])
     must_see = st.text_area("🏖️ Must-See Attractions (optional, comma-separated)")
 
@@ -227,6 +227,7 @@ if submit_btn:
 
     except Exception as e:
         st.error(f"❌ Error running CrewAI automation: {e}")
+
 
 
 
