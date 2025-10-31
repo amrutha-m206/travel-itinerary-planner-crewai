@@ -191,12 +191,13 @@ if "markdown_output" in st.session_state:
         for line in textwrap.wrap(plain_text, width=100):
             pdf.multi_cell(0, 8, line)
 
-        # Generate PDF bytes
-        pdf_bytes = bytes(pdf.output(dest="S").encode("latin-1"))
+        # # Generate PDF bytes
+        # pdf_bytes = bytes(pdf.output(dest="S").encode("latin-1"))
 
-        st.download_button(
-            label="📄 Download as PDF",
-            data=pdf_bytes,
-            file_name=f"itinerary_{destination.replace(' ', '_')}.pdf",
-            mime="application/pdf",
-        )
+        # st.download_button(
+        #     label="📄 Download as PDF",
+        #     data=pdf_bytes,
+        #     file_name=f"itinerary_{destination.replace(' ', '_')}.pdf",
+        #     mime="application/pdf",
+        # )
+
