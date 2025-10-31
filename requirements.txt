@@ -9,3 +9,6 @@ crewai
 crewai-tools
 
 crewai[google-genai]
+
+beautifulsoup4
+markdown
